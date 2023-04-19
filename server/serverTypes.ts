@@ -1,5 +1,14 @@
 import { Request } from "express";
 
+interface BoxType {
+	bounding_box: {
+		bottom_row: number;
+		left_col: number;
+		right_col: number;
+		top_row: number;
+	};
+}
+
 export interface RegisterRequest extends Request {
 	body: {
 		name: string;
@@ -27,13 +36,18 @@ export interface ClarifaiRequest extends Request {
 	};
 }
 
-interface BoxType {
-	bounding_box: {
-		bottom_row: number;
-		left_col: number;
-		right_col: number;
-		top_row: number;
-	};
+export interface User {
+	id: number;
+	name: string;
+	email: string;
+	entries: number;
+	joined: Date;
+}
+
+export interface Login {
+	id: number;
+	hash: string;
+	email: string;
 }
 
 export interface ClarifaiDataType {

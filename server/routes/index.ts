@@ -1,82 +1,108 @@
 import { Router } from "express";
 import bcrypt from "bcryptjs";
 
-import db from "../db/index.js";
-
 import type {
 	SigninRequest,
 	RegisterRequest,
 	ImageRequest,
 	ClarifaiDataType,
 	ClarifaiRequest,
+	User,
+	Login,
 } from "../serverTypes.js";
+
+import connectToDatabase from "../db/index.js";
+const db = connectToDatabase();
 
 const SALT = 10;
 const MODEL_ID = process.env.MODEL_ID;
 
 const router = Router();
 
-let id = 2;
-
-router.get("/", (req, res) => {
-	res.send(db.users);
+router.get("/", async (req, res) => {
+	try {
+		const users = await db<User>("users").select("*");
+		res.send(users);
+	} catch (error) {
+		res.send(error);
+	}
 });
 
-router.post("/signin", (req: SigninRequest, res) => {
+router.post("/signin", async (req: SigninRequest, res) => {
 	const { email, password } = req.body;
 
-	const foundUser = db.users.find((user) => user.email === email);
+	const foundUser = await db<User>("users")
+		.join(db.ref("login"), "users.id", "login.id")
+		.select("users.id", "users.name", "users.entries", "login.hash")
+		.where("users.email", email);
 
-	if (!foundUser) {
+	if (foundUser.length === 0) {
 		return res.status(400).json("error logging in");
 	}
 
-	bcrypt.compare(password, foundUser.password).then((isCorrectPass) => {
+	bcrypt.compare(password, foundUser[0].hash).then((isCorrectPass) => {
 		if (!isCorrectPass) {
 			return res.status(400).json("error logging in");
 		}
-		res.json({ ...foundUser, password: null });
+
+		const returnUser = {
+			id: foundUser[0].id,
+			name: foundUser[0].name,
+			email: foundUser[0].email,
+		};
+
+		res.json(returnUser);
 	});
 });
 
 router.post("/register", (req: RegisterRequest, res) => {
 	const { email, name, password } = req.body;
 
-	bcrypt.hash(password, SALT).then((hash) => {
-		db.users.push({
-			id,
-			name,
-			email,
-			password: hash,
-			entries: 0,
-			joined: new Date(),
-		});
-		res.json({ ...db.users.at(-1), password: null });
-		id++;
+	bcrypt.hash(password, SALT).then(async (hash) => {
+		try {
+			const createdUser = await db<User>("users")
+				.insert({
+					name,
+					email,
+					joined: new Date(),
+				})
+				.returning("*");
+			await db<Login>("login").insert({
+				hash,
+				email,
+			});
+			res.json(createdUser[0]);
+		} catch (error) {
+			console.log(error);
+			res.status(400).json(error);
+		}
 	});
 });
 
-router.get("/profile/:id", (req, res) => {
+router.get("/profile/:id", async (req, res) => {
 	const { id } = req.params;
 
-	const foundUser = findUser(id);
+	const foundUser = await findUser(id);
 
 	if (foundUser) {
-		return res.json({ ...foundUser, password: null });
+		return res.json(foundUser);
 	}
 
 	return res.status(404).json("no such user");
 });
 
-router.put("/image", (req: ImageRequest, res) => {
+router.put("/image", async (req: ImageRequest, res) => {
 	const { id } = req.body;
 
-	const foundUser = findUser(id);
+	const updatedUser = await db<User>("users")
+		.where("id", id)
+		.increment("entries", 1)
+		.returning("entries");
 
-	if (foundUser) {
-		foundUser.entries++;
-		return res.json(foundUser.entries);
+	if (updatedUser.length > 0) {
+		return res.json(updatedUser[0].entries);
 	}
+
 	return res.status(404).json("no such user");
 });
 
@@ -100,13 +126,12 @@ router.post("/clarifai", (req: ClarifaiRequest, res) => {
 		});
 });
 
-function findUser(id: string) {
-	for (const user of db.users) {
-		if (user.id === +id) {
-			return user;
-		}
+async function findUser(id: string) {
+	const entries = await db<User>("users").select("*").where("id", id);
+	if (entries.length === 0) {
+		return null;
 	}
-	return null;
+	return entries[0];
 }
 
 function setupClarifai(imageURL: string) {
