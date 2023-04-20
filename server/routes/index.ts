@@ -50,6 +50,7 @@ router.post("/signin", async (req: SigninRequest, res) => {
 				id: foundUser[0].id,
 				name: foundUser[0].name,
 				email: foundUser[0].email,
+				entries: foundUser[0].entries,
 			};
 
 			res.json(returnUser);

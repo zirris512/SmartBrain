@@ -11,8 +11,6 @@ import ImageLinkForm from "./components/ImageLinkForm/ImageLinkForm";
 import FaceRecognition from "./components/FaceRecognition/FaceRecognition";
 import "./App.css";
 
-const MODEL_ID = "face-detection";
-
 interface BoxType {
 	bounding_box: {
 		bottom_row: number;
@@ -20,16 +18,6 @@ interface BoxType {
 		right_col: number;
 		top_row: number;
 	};
-}
-
-interface ClarifaiDataType {
-	outputs: {
-		data: {
-			regions: {
-				region_info: BoxType;
-			}[];
-		};
-	}[];
 }
 
 function App() {
@@ -43,6 +31,8 @@ function App() {
 	const imageRef = useRef<HTMLImageElement>(null);
 
 	function loadUser(user: User) {
+		setImageUrl("");
+		setBox(null);
 		setUser(user);
 	}
 
@@ -52,33 +42,6 @@ function App() {
 
 	function onButtonSubmit(e: React.MouseEvent<HTMLButtonElement>) {
 		setImageUrl(input);
-		// const requestOptions = setupClarifai(input);
-
-		// fetch("https://api.clarifai.com/v2/models/" + MODEL_ID + "/outputs", requestOptions)
-		// 	.then((response) => {
-		// 		fetch("/api/image", {
-		// 			method: "PUT",
-		// 			headers: {
-		// 				"Content-Type": "application/json",
-		// 			},
-		// 			body: JSON.stringify({
-		// 				id: user?.id,
-		// 			}),
-		// 		})
-		// 			.then((response) => response.json())
-		// 			.then((count: number) => {
-		// 				setUser((prev) => ({ ...prev, entries: count }));
-		// 			});
-		// 		return response.json();
-		// 	})
-		// 	.then((result: ClarifaiDataType) => {
-		// 		const imageRegion = result.outputs[0].data.regions?.[0];
-		// 		if (!imageRegion) {
-		// 			return;
-		// 		}
-		// 		displayFaceBox(calculateFaceLocation(imageRegion.region_info));
-		// 	})
-		// 	.catch((error) => console.log("error", error));
 		fetch("/api/clarifai", {
 			method: "POST",
 			headers: {
@@ -137,8 +100,6 @@ function App() {
 	}
 
 	function onRouteChange(route: string) {
-		// e.preventDefault();
-
 		if (route !== "home") {
 			setIsSignedIn(false);
 		} else {
@@ -168,34 +129,4 @@ function App() {
 	);
 }
 
-// function setupClarifai(imageURL: string) {
-// 	const PAT = "ca3ef278f64446cc99bd34a3deb53aa0";
-// 	const USER_ID = "luhuli";
-// 	const APP_ID = "SmartBrainApp";
-
-// 	const raw = JSON.stringify({
-// 		user_app_id: {
-// 			user_id: USER_ID,
-// 			app_id: APP_ID,
-// 		},
-// 		inputs: [
-// 			{
-// 				data: {
-// 					image: {
-// 						url: imageURL,
-// 					},
-// 				},
-// 			},
-// 		],
-// 	});
-
-// 	return {
-// 		method: "POST",
-// 		headers: {
-// 			Accept: "application/json",
-// 			Authorization: "Key " + PAT,
-// 		},
-// 		body: raw,
-// 	};
-// }
 export default App;
