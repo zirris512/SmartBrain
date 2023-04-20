@@ -31,28 +31,33 @@ router.get("/", async (req, res) => {
 router.post("/signin", async (req: SigninRequest, res) => {
 	const { email, password } = req.body;
 
-	const foundUser = await db<User>("users")
-		.join(db.ref("login"), "users.id", "login.id")
-		.select("users.id", "users.name", "users.entries", "login.hash")
-		.where("users.email", email);
+	try {
+		const foundUser = await db<User>("users")
+			.join("login", "users.id", "login.id")
+			.select("users.id", "users.name", "users.entries", "login.hash")
+			.where("users.email", email);
 
-	if (foundUser.length === 0) {
-		return res.status(400).json("error logging in");
-	}
-
-	bcrypt.compare(password, foundUser[0].hash).then((isCorrectPass) => {
-		if (!isCorrectPass) {
+		if (foundUser.length === 0) {
 			return res.status(400).json("error logging in");
 		}
 
-		const returnUser = {
-			id: foundUser[0].id,
-			name: foundUser[0].name,
-			email: foundUser[0].email,
-		};
+		bcrypt.compare(password, foundUser[0].hash).then((isCorrectPass) => {
+			if (!isCorrectPass) {
+				return res.status(400).json("error logging in");
+			}
 
-		res.json(returnUser);
-	});
+			const returnUser = {
+				id: foundUser[0].id,
+				name: foundUser[0].name,
+				email: foundUser[0].email,
+			};
+
+			res.json(returnUser);
+		});
+	} catch (error) {
+		console.log(error);
+		res.status(400).json("error logging in");
+	}
 });
 
 router.post("/register", (req: RegisterRequest, res) => {
@@ -60,21 +65,23 @@ router.post("/register", (req: RegisterRequest, res) => {
 
 	bcrypt.hash(password, SALT).then(async (hash) => {
 		try {
-			const createdUser = await db<User>("users")
-				.insert({
-					name,
+			await db.transaction(async (trx) => {
+				const createdUser = await trx<User>("users")
+					.insert({
+						name,
+						email,
+						joined: new Date(),
+					})
+					.returning("*");
+				await trx<Login>("login").insert({
+					hash,
 					email,
-					joined: new Date(),
-				})
-				.returning("*");
-			await db<Login>("login").insert({
-				hash,
-				email,
+				});
+				res.json(createdUser[0]);
 			});
-			res.json(createdUser[0]);
 		} catch (error) {
 			console.log(error);
-			res.status(400).json(error);
+			res.status(400).json("Could not register user");
 		}
 	});
 });
@@ -82,13 +89,13 @@ router.post("/register", (req: RegisterRequest, res) => {
 router.get("/profile/:id", async (req, res) => {
 	const { id } = req.params;
 
-	const foundUser = await findUser(id);
+	const foundUser = await db<User>("users").select("*").where("id", id);
 
-	if (foundUser) {
-		return res.json(foundUser);
+	if (foundUser.length === 0) {
+		return res.status(404).json("no such user");
 	}
 
-	return res.status(404).json("no such user");
+	return res.json(foundUser[0]);
 });
 
 router.put("/image", async (req: ImageRequest, res) => {
@@ -103,7 +110,7 @@ router.put("/image", async (req: ImageRequest, res) => {
 		return res.json(updatedUser[0].entries);
 	}
 
-	return res.status(404).json("no such user");
+	return res.status(404).json("unable to get entries");
 });
 
 router.post("/clarifai", (req: ClarifaiRequest, res) => {
@@ -125,14 +132,6 @@ router.post("/clarifai", (req: ClarifaiRequest, res) => {
 			res.status(400).json(error);
 		});
 });
-
-async function findUser(id: string) {
-	const entries = await db<User>("users").select("*").where("id", id);
-	if (entries.length === 0) {
-		return null;
-	}
-	return entries[0];
-}
 
 function setupClarifai(imageURL: string) {
 	const PAT = process.env.PAT;
