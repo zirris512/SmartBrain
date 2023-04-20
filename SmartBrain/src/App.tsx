@@ -12,18 +12,16 @@ import FaceRecognition from "./components/FaceRecognition/FaceRecognition";
 import "./App.css";
 
 interface BoxType {
-	bounding_box: {
-		bottom_row: number;
-		left_col: number;
-		right_col: number;
-		top_row: number;
-	};
+	bottom_row: number;
+	left_col: number;
+	right_col: number;
+	top_row: number;
 }
 
 function App() {
 	const [input, setInput] = useState("");
 	const [imageUrl, setImageUrl] = useState("");
-	const [box, setBox] = useState<ImageBoxType | null>(null);
+	const [boxes, setBoxes] = useState<ImageBoxType[] | null>(null);
 	const [route, setRoute] = useState("signin");
 	const [isSignedIn, setIsSignedIn] = useState(false);
 	const [user, setUser] = useState<User>({} as User);
@@ -32,7 +30,7 @@ function App() {
 
 	function loadUser(user: User) {
 		setImageUrl("");
-		setBox(null);
+		setBoxes(null);
 		setUser(user);
 	}
 
@@ -42,6 +40,7 @@ function App() {
 
 	function onButtonSubmit(e: React.MouseEvent<HTMLButtonElement>) {
 		setImageUrl(input);
+		setBoxes(null);
 		fetch("/api/clarifai", {
 			method: "POST",
 			headers: {
@@ -57,8 +56,9 @@ function App() {
 				}
 				return response.json();
 			})
-			.then((data: BoxType) => {
-				displayFaceBox(calculateFaceLocation(data));
+			.then((data: BoxType[]) => {
+				const transformedBox = data.map((box) => calculateFaceLocation(box));
+				setBoxes(transformedBox);
 				incrementEntryCount();
 			})
 			.catch((error) => {
@@ -86,7 +86,7 @@ function App() {
 	}
 
 	function calculateFaceLocation(data: BoxType): ImageBoxType {
-		const clarifaiFace = data.bounding_box;
+		const clarifaiFace = data;
 		const image = imageRef.current!;
 		const width = +image.width;
 		const height = +image.height;
@@ -96,10 +96,6 @@ function App() {
 			rightCol: width - clarifaiFace.right_col * width,
 			bottomRow: height - clarifaiFace.bottom_row * height,
 		};
-	}
-
-	function displayFaceBox(box: ImageBoxType) {
-		setBox(box);
 	}
 
 	function onRouteChange(route: string) {
@@ -121,7 +117,7 @@ function App() {
 					<Logo />
 					<Rank name={user?.name} rank={user?.entries} />
 					<ImageLinkForm onInputChange={onInputChange} onButtonSubmit={onButtonSubmit} />
-					<FaceRecognition imageUrl={imageUrl} imageRef={imageRef} box={box} />
+					<FaceRecognition imageUrl={imageUrl} imageRef={imageRef} boxes={boxes} />
 				</>
 			) : route === "signin" ? (
 				<Signin onRouteChange={onRouteChange} loadUser={loadUser} />
