@@ -5,7 +5,7 @@ import type {
 	SigninRequest,
 	RegisterRequest,
 	ImageRequest,
-	ClarifaiDataType,
+	ClarifaiData,
 	ClarifaiRequest,
 	User,
 	Login,
@@ -122,12 +122,14 @@ router.post("/clarifai", (req: ClarifaiRequest, res) => {
 		.then((response) => {
 			return response.json();
 		})
-		.then((result: ClarifaiDataType) => {
-			const imageRegion = result.outputs[0].data.regions?.[0];
-			if (!imageRegion) {
-				return res.status(400).json("error finding face in image");
+		.then((result: ClarifaiData) => {
+			if (Object.keys(result.outputs[0].data).length === 0) {
+				throw "image does not contain any faces";
 			}
-			res.json(imageRegion.region_info);
+			const faceLocations = result.outputs[0].data.regions.map((region) => {
+				return region.region_info.bounding_box;
+			});
+			res.json(faceLocations);
 		})
 		.catch((error) => {
 			res.status(400).json(error);

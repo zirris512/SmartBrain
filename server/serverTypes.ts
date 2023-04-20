@@ -50,7 +50,7 @@ export interface Login {
 	email: string;
 }
 
-export interface ClarifaiDataType {
+export interface ClarifaiData {
 	outputs: {
 		data: {
 			regions: {
