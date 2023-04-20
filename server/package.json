@@ -7,7 +7,8 @@
 	"scripts": {
 		"watch": "tsc -w",
 		"dev:serve": "nodemon ./server.ts",
-		"dev:start": "concurrently \"pnpm dev:serve\" \"cd ../SmartBrain && pnpm dev\""
+		"dev:start": "concurrently \"pnpm dev:serve\" \"cd ../SmartBrain && pnpm dev\"",
+		"build": "tsc && cd ../SmartBrain && pnpm build"
 	},
 	"keywords": [],
 	"author": "",
