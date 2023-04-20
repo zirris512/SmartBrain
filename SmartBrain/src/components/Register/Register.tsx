@@ -1,4 +1,8 @@
 import { useRef } from "react";
+
+import Form from "../Form/Form";
+import FormField from "../FormField/FormField";
+
 import { RouteChange, User } from "../../globalTypes/globalTypes";
 
 const Register = ({ onRouteChange, loadUser }: RouteChange) => {
@@ -14,6 +18,11 @@ const Register = ({ onRouteChange, loadUser }: RouteChange) => {
 			password: passwordRef.current?.value,
 			name: nameRef.current?.value,
 		};
+
+		if (!body.email || body.password || body.name) {
+			console.log("Please fill in all required fields");
+			return;
+		}
 
 		fetch("/api/register", {
 			method: "POST",
@@ -38,7 +47,29 @@ const Register = ({ onRouteChange, loadUser }: RouteChange) => {
 	return (
 		<article className="br3 ba b--black-10 mv4 w-100 w-50-m w-25-l mw6 shadow-5 center">
 			<main className="pa4 black-80">
-				<form className="measure center" onSubmit={onSubmitRegister}>
+				<Form
+					title="Register"
+					altButtonTitle="Sign In"
+					formSubmit={onSubmitRegister}
+					navigate={() => onRouteChange("signin")}
+				>
+					<FormField formId="name" type="text" name="name" title="Name" reference={nameRef} />
+					<FormField
+						formId="email"
+						type="email"
+						name="email-address"
+						title="Email"
+						reference={emailRef}
+					/>
+					<FormField
+						formId="password"
+						type="password"
+						name="password"
+						title="Password"
+						reference={passwordRef}
+					/>
+				</Form>
+				{/* <form className="measure center" onSubmit={onSubmitRegister}>
 					<fieldset id="sign_up" className="ba b--transparent ph0 mh0">
 						<legend className="f1 fw6 ph0 mh0">Register</legend>
 						<div className="mt3">
@@ -78,14 +109,19 @@ const Register = ({ onRouteChange, loadUser }: RouteChange) => {
 							/>
 						</div>
 					</fieldset>
-					<div className="">
+					<div>
 						<input
 							className="b ph3 pv2 input-reset ba b--black bg-transparent grow pointer f6 dib"
 							type="submit"
 							value="Register"
 						/>
 					</div>
-				</form>
+					<div className="lh-copy mt3">
+						<p onClick={(e) => onRouteChange("signin")} className="f6 link dim black db pointer">
+							Sign In
+						</p>
+					</div>
+				</form> */}
 			</main>
 		</article>
 	);

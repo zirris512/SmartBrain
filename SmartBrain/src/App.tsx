@@ -79,6 +79,9 @@ function App() {
 			.then((response) => response.json())
 			.then((count: number) => {
 				setUser((prev) => ({ ...prev, entries: count }));
+			})
+			.catch((error) => {
+				console.log(error);
 			});
 	}
 

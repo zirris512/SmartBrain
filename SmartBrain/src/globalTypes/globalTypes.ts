@@ -1,3 +1,5 @@
+import React from "react";
+
 export interface ImageBoxType {
 	leftCol: number;
 	topRow: number;

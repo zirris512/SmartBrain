@@ -1,5 +1,8 @@
 import { useRef } from "react";
 
+import Form from "../Form/Form";
+import FormField from "../FormField/FormField";
+
 import { RouteChange, User } from "../../globalTypes/globalTypes";
 
 const Signin = ({ onRouteChange, loadUser }: RouteChange) => {
@@ -37,7 +40,28 @@ const Signin = ({ onRouteChange, loadUser }: RouteChange) => {
 	return (
 		<article className="br3 ba b--black-10 mv4 w-100 w-50-m w-25-l mw6 shadow-5 center">
 			<main className="pa4 black-80">
-				<form className="measure center" onSubmit={onSubmitSignin}>
+				<Form
+					title="Sign In"
+					altButtonTitle="Register"
+					formSubmit={onSubmitSignin}
+					navigate={() => onRouteChange("register")}
+				>
+					<FormField
+						formId="email"
+						type="email"
+						name="email-address"
+						title="Email"
+						reference={emailRef}
+					/>
+					<FormField
+						formId="password"
+						type="password"
+						name="password"
+						title="Password"
+						reference={passwordRef}
+					/>
+				</Form>
+				{/* <form className="measure center" onSubmit={onSubmitSignin}>
 					<fieldset id="sign_up" className="ba b--transparent ph0 mh0">
 						<legend className="f1 fw6 ph0 mh0">Sign In</legend>
 						<div className="mt3">
@@ -77,7 +101,7 @@ const Signin = ({ onRouteChange, loadUser }: RouteChange) => {
 							Register
 						</p>
 					</div>
-				</form>
+				</form> */}
 			</main>
 		</article>
 	);
