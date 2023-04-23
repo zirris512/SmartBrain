@@ -14,7 +14,7 @@ app.use(cors());
 const PORT = process.env.PORT || 3001;
 
 if (process.env.NODE_ENV === "production") {
-	const staticBuildPath = url.fileURLToPath(new URL("../SmartBrain/dist", import.meta.url));
+	const staticBuildPath = url.fileURLToPath(new URL("../../SmartBrain/dist", import.meta.url));
 
 	app.use(express.static(staticBuildPath));
 	app.get("*", (_, res) => {
