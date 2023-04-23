@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import bcrypt from "bcryptjs";
 
-import type { SigninRequest, RegisterRequest, User, Login } from "../serverTypes.js";
+import type { SigninRequest, RegisterRequest, User, Login } from "../globalTypes.js";
 
 import db from "../db/index.js";
 
@@ -18,6 +18,10 @@ export const getAllUsers = async (_: Request, res: Response) => {
 
 export const postSignin = async (req: SigninRequest, res: Response) => {
 	const { email, password } = req.body;
+
+	if (!email || !password) {
+		return res.status(400).json("incorrect email or password");
+	}
 
 	try {
 		const foundUser = await db<User>("users")
@@ -52,6 +56,10 @@ export const postSignin = async (req: SigninRequest, res: Response) => {
 export const postRegister = (req: RegisterRequest, res: Response) => {
 	const { email, name, password } = req.body;
 
+	if (!email || !name || !password) {
+		return res.status(400).json("incorrect form submission");
+	}
+
 	bcrypt.hash(password, SALT).then(async (hash) => {
 		try {
 			await db.transaction(async (trx) => {
@@ -78,11 +86,19 @@ export const postRegister = (req: RegisterRequest, res: Response) => {
 export const getProfile = async (req: Request, res: Response) => {
 	const { id } = req.params;
 
-	const foundUser = await db<User>("users").select("*").where("id", id);
-
-	if (foundUser.length === 0) {
-		return res.status(404).json("no such user");
+	if (!id) {
+		res.status(400).json("invalid id");
 	}
 
-	return res.json(foundUser[0]);
+	try {
+		const foundUser = await db<User>("users").select("*").where("id", id);
+
+		if (foundUser.length === 0) {
+			throw "user not found";
+		}
+
+		return res.json(foundUser[0]);
+	} catch (error) {
+		return res.status(404).json(error);
+	}
 };

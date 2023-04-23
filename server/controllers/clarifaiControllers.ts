@@ -2,12 +2,14 @@ import { Response } from "express";
 
 import db from "../db/index.js";
 
-import type { ClarifaiData, ClarifaiRequest, ImageRequest, User } from "../serverTypes.js";
-
-const MODEL_ID = process.env.MODEL_ID;
+import type { ClarifaiData, ClarifaiRequest, ImageRequest, User } from "../globalTypes.js";
 
 export const postClarifai = (req: ClarifaiRequest, res: Response) => {
+	const MODEL_ID = process.env.MODEL_ID;
 	const { url } = req.body;
+	if (!url) {
+		return res.status(400).json("invalid image url");
+	}
 	const requestOptions = setupClarifai(url);
 
 	fetch("https://api.clarifai.com/v2/models/" + MODEL_ID + "/outputs", requestOptions)
@@ -31,16 +33,22 @@ export const postClarifai = (req: ClarifaiRequest, res: Response) => {
 export const updateEntries = async (req: ImageRequest, res: Response) => {
 	const { id } = req.body;
 
-	const updatedUser = await db<User>("users")
-		.where("id", id)
-		.increment("entries", 1)
-		.returning("entries");
-
-	if (updatedUser.length > 0) {
-		return res.json(updatedUser[0].entries);
+	if (!id) {
+		return res.status(400).json("invalid id");
 	}
 
-	return res.status(404).json("unable to get entries");
+	try {
+		const updatedUser = await db<User>("users")
+			.where("id", id)
+			.increment("entries", 1)
+			.returning("entries");
+
+		if (updatedUser.length > 0) {
+			return res.json(updatedUser[0].entries);
+		}
+	} catch (error) {
+		return res.status(404).json("unable to get entries");
+	}
 };
 
 function setupClarifai(imageURL: string) {
@@ -73,3 +81,5 @@ function setupClarifai(imageURL: string) {
 		body: raw,
 	};
 }
+
+function setupGrpcClarifai(imageURL: string) {}
