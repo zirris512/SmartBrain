@@ -19,11 +19,6 @@ const Register = ({ onRouteChange, loadUser }: RouteChange) => {
 			name: nameRef.current?.value,
 		};
 
-		if (!body.email || body.password || body.name) {
-			console.log("Please fill in all required fields");
-			return;
-		}
-
 		fetch("/api/register", {
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
@@ -69,59 +64,6 @@ const Register = ({ onRouteChange, loadUser }: RouteChange) => {
 						reference={passwordRef}
 					/>
 				</Form>
-				{/* <form className="measure center" onSubmit={onSubmitRegister}>
-					<fieldset id="sign_up" className="ba b--transparent ph0 mh0">
-						<legend className="f1 fw6 ph0 mh0">Register</legend>
-						<div className="mt3">
-							<label className="db fw6 lh-copy f6" htmlFor="name">
-								Name
-							</label>
-							<input
-								className="pa2 input-reset ba bg-transparent hover-bg-black hover-white w-100"
-								type="text"
-								name="name"
-								id="name"
-								ref={nameRef}
-							/>
-						</div>
-						<div className="mt3">
-							<label className="db fw6 lh-copy f6" htmlFor="email-address">
-								Email
-							</label>
-							<input
-								className="pa2 input-reset ba bg-transparent hover-bg-black hover-white w-100"
-								type="email"
-								name="email-address"
-								id="email-address"
-								ref={emailRef}
-							/>
-						</div>
-						<div className="mv3">
-							<label className="db fw6 lh-copy f6" htmlFor="password">
-								Password
-							</label>
-							<input
-								className="b pa2 input-reset ba bg-transparent hover-bg-black hover-white w-100"
-								type="password"
-								name="password"
-								id="password"
-								ref={passwordRef}
-							/>
-						</div>
-					</fieldset>
-					<div>
-						<input
-							className="b ph3 pv2 input-reset ba b--black bg-transparent grow pointer f6 dib"
-							type="submit"
-							value="Register"
-						/>
-					</div>
-					<div className="lh-copy mt3">
-						<p onClick={(e) => onRouteChange("signin")} className="f6 link dim black db pointer">
-							Sign In
-						</p>
-					</div>
-				</form> */}
 			</main>
 		</article>
 	);
