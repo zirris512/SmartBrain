@@ -3,7 +3,7 @@ const { knex } = k;
 
 const connectToDatabase = () => {
 	let connection: Knex.Config;
-	if (process.env.NODE_ENV === "production") {
+	if (process.env.NODE_ENV === "prod") {
 		const DB_URI = process.env.DB_URI!;
 		connection = {
 			client: "pg",
